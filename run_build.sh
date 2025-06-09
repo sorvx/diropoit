@@ -6,24 +6,12 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Get system memory in GB
-TOTAL_MEM=$(free -g | awk '/^Mem:/{print $2}')
-# Calculate memory limits (use 25% of total memory)
-MAX_MEM=$((TOTAL_MEM / 4))
-INIT_MEM=$((MAX_MEM / 2))
-# Ensure minimum values
-if [ $MAX_MEM -lt 2 ]; then MAX_MEM=2; fi
-if [ $INIT_MEM -lt 1 ]; then INIT_MEM=1; fi
-
-echo -e "${YELLOW}Building with memory settings: Initial=${INIT_MEM}G, Max=${MAX_MEM}G${NC}"
-
-# Kill any running Java processes (optional, uncomment if needed)
-# echo "Stopping Java processes..."
-# pkill java
-
-# Set memory limits
-export GRADLE_OPTS="-Xmx${MAX_MEM}G -Xms${INIT_MEM}G -XX:MaxMetaspaceSize=512M -XX:+UseParallelGC -XX:ParallelGCThreads=4"
-export JAVA_OPTS="-Xmx${MAX_MEM}G -Xms${INIT_MEM}G -XX:MaxMetaspaceSize=512M -XX:+UseParallelGC -XX:ParallelGCThreads=4"
+# Try to use Java 17 directly if available
+JAVA17_PATH="/usr/lib/jvm/java-17-openjdk-amd64/bin/java"
+if [ -x "$JAVA17_PATH" ]; then
+    export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+    export PATH="$JAVA_HOME/bin:$PATH"
+fi
 
 # Check for Java
 if ! command -v java &> /dev/null; then
@@ -39,6 +27,21 @@ if [[ ! $JAVA_VER =~ "17" ]]; then
     echo -e "${YELLOW}Please run ./install_java17.sh to install Java 17${NC}"
     exit 1
 fi
+
+# Get system memory in GB
+TOTAL_MEM=$(free -g | awk '/^Mem:/{print $2}')
+# Calculate memory limits (use 25% of total memory)
+MAX_MEM=$((TOTAL_MEM / 4))
+INIT_MEM=$((MAX_MEM / 2))
+# Ensure minimum values
+if [ $MAX_MEM -lt 2 ]; then MAX_MEM=2; fi
+if [ $INIT_MEM -lt 1 ]; then INIT_MEM=1; fi
+
+echo -e "${YELLOW}Building with memory settings: Initial=${INIT_MEM}G, Max=${MAX_MEM}G${NC}"
+
+# Set memory limits
+export GRADLE_OPTS="-Xmx${MAX_MEM}G -Xms${INIT_MEM}G -XX:MaxMetaspaceSize=512M -XX:+UseParallelGC -XX:ParallelGCThreads=4"
+export JAVA_OPTS="-Xmx${MAX_MEM}G -Xms${INIT_MEM}G -XX:MaxMetaspaceSize=512M -XX:+UseParallelGC -XX:ParallelGCThreads=4"
 
 # Clean old files
 echo -e "${YELLOW}Cleaning old build files...${NC}"
